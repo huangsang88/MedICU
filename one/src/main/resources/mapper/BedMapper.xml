@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="icu.one.mapper.BedMapper">
+<!-- 查询所有床位 -->
+    <select id="selectAllBeds" resultMap="BedResultMap">
+        SELECT * FROM beds ORDER BY bed_no
+    </select>
+
+    <!-- 根据床位ID查询床位 -->
+    <select id="getBedById" resultMap="BedResultMap">
+        SELECT * FROM beds WHERE bed_id = #{bedId}
+    </select>
+
+    <!-- 根据床位号查询床位 -->
+    <select id="getBedByNo" resultMap="BedResultMap">
+        SELECT * FROM beds WHERE bed_no = #{bedNo}
+    </select>
+
+    <!-- 根据科室查询床位 -->
+    <select id="getBedsByDepartment" resultMap="BedResultMap">
+        SELECT * FROM beds WHERE department = #{department} ORDER BY bed_no
+    </select>
+
+    <!-- 根据状态查询床位 -->
+    <select id="getBedsByStatus" resultMap="BedResultMap">
+        SELECT * FROM beds WHERE status = #{status} ORDER BY bed_no
+    </select>
+
+    <!-- 查询空闲床位 -->
+    <select id="getAvailableBeds" resultMap="BedResultMap">
+        SELECT * FROM beds WHERE status = '空闲' ORDER BY bed_no
+    </select>
+
+    <!-- 查询占用床位 -->
+    <select id="getOccupiedBeds" resultMap="BedResultMap">
+        SELECT * FROM beds WHERE status = '占用' ORDER BY bed_no
+    </select>
+
+    <!-- 查询所有床位及患者信息 -->
+    <select id="getBedsWithPatients" resultMap="BedWithPatientResultMap">
+        SELECT 
+            b.*,
+            p.patient_id,
+            p.medical_record_no,
+            p.name as patient_name,
+            p.gender,
+            p.age,
+            p.diagnosis,
+            p.status as patient_status
+        FROM beds b
+        LEFT JOIN patients p ON b.patient_id = p.patient_id
+        ORDER BY b.bed_no
+    </select>
+
+    <!-- 添加床位 -->
+    <insert id="addBed" useGeneratedKeys="true" keyProperty="bedId">
+        INSERT INTO beds(
+            bed_no,
+            room_no,
+            department,
+            status,
+            patient_id
+        ) VALUES (
+            #{bedNo},
+            #{roomNo},
+            #{department},
+            #{status},
+            #{patientId}
+        )
+    </insert>
+
+    <!-- 更新床位信息 -->
+    <update id="updateBed">
+        UPDATE beds 
+        SET bed_no = #{bedNo},
+            room_no = #{roomNo},
+            department = #{department},
+            status = #{status},
+            patient_id = #{patientId},
+            updated_time = CURRENT_TIMESTAMP
+        WHERE bed_id = #{bedId}
+    </update>
+
+    <!-- 更新床位状态 -->
+    <update id="updateBedStatus">
+        UPDATE beds 
+        SET status = #{status},
+            updated_time = CURRENT_TIMESTAMP
+        WHERE bed_id = #{bedId}
+    </update>
+
+    <!-- 分配患者到床位 -->
+    <update id="assignPatientToBed">
+        UPDATE beds 
+        SET patient_id = #{patientId},
+            status = '占用',
+            updated_time = CURRENT_TIMESTAMP
+        WHERE bed_id = #{bedId}
+    </update>
+
+    <!-- 解除床位患者绑定 -->
+    <update id="unassignPatientFromBed">
+        UPDATE beds 
+        SET patient_id = NULL,
+            status = '空闲',
+            updated_time = CURRENT_TIMESTAMP
+        WHERE bed_id = #{bedId}
+    </update>
+
+    <!-- 换床操作 -->
+    <update id="swapBeds">
+        UPDATE beds 
+        SET patient_id = 
+            CASE 
+                WHEN bed_id = #{fromBedId} THEN NULL
+                WHEN bed_id = #{toBedId} THEN #{patientId}
+            END,
+            status = 
+            CASE 
+                WHEN bed_id = #{fromBedId} THEN '空闲'
+                WHEN bed_id = #{toBedId} THEN '占用'
+            END,
+            updated_time = CURRENT_TIMESTAMP
+        WHERE bed_id IN (#{fromBedId}, #{toBedId})
+    </update>
+
+    <!-- 预约锁定床位 -->
+    <update id="reserveBed">
+        UPDATE beds 
+        SET status = '预约',  
+            updated_time = CURRENT_TIMESTAMP
+        WHERE bed_id = #{bedId} AND status = '空闲'
+    </update>
+
+    <!-- 取消床位预约 -->
+    <update id="cancelBedReservation">
+        UPDATE beds 
+        SET status = '空闲',
+            updated_time = CURRENT_TIMESTAMP
+        WHERE bed_id = #{bedId} AND status = '预约'
+    </update>
+
+    <!-- 删除床位 -->
+    <delete id="deleteBed">
+        DELETE FROM beds WHERE bed_id = #{bedId}
+    </delete>
+
+    <!-- 统计科室床位使用情况 -->
+    <select id="getBedStatisticsByDepartment" resultType="map">
+        SELECT 
+            department,
+            COUNT(*) as total_beds,
+            SUM(CASE WHEN status = '占用' THEN 1 ELSE 0 END) as occupied_beds,
+            SUM(CASE WHEN status = '空闲' THEN 1 ELSE 0 END) as available_beds,
+            SUM(CASE WHEN status = '维护' THEN 1 ELSE 0 END) as maintenance_beds
+        FROM beds 
+        WHERE department = #{department}
+        GROUP BY department
+    </select>
+
+    <!-- 获取所有科室床位统计 -->
+    <select id="getAllBedStatistics" resultType="map">
+        SELECT 
+            department,
+            COUNT(*) as total_beds,
+            SUM(CASE WHEN status = '占用' THEN 1 ELSE 0 END) as occupied_beds,
+            SUM(CASE WHEN status = '空闲' THEN 1 ELSE 0 END) as available_beds,
+            SUM(CASE WHEN status = '维护' THEN 1 ELSE 0 END) as maintenance_beds
+        FROM beds 
+        GROUP BY department
+        ORDER BY department
+    </select>
+
+    <!-- 根据患者ID查询床位 -->
+    <select id="getBedByPatientId" resultMap="BedResultMap">
+        SELECT * FROM beds WHERE patient_id = #{patientId}
+    </select>
+
+    <!-- 批量更新床位状态 -->
+    <update id="batchUpdateBedStatus">
+        UPDATE beds 
+        SET status = #{status},
+            updated_time = CURRENT_TIMESTAMP
+        WHERE bed_id IN 
+        <foreach collection="bedIds" item="bedId" open="(" separator="," close=")">
+            #{bedId}
+        </foreach>
+    </update>
+    
+</mapper>
