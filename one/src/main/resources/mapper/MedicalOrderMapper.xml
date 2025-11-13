@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="icu.one.mapper.MedicalOrderMapper">
+
+    <!-- 查询患者检验检查医嘱 -->
+    <select id="getOrdersByPatientId" resultMap="MedicalOrderResultMap">
+        SELECT * FROM medical_orders 
+        WHERE patient_id = #{patientId} 
+        ORDER BY order_time DESC
+    </select>
+
+    <!-- 查询检验检查项目（根据内容关键词） -->
+    <select id="getLabAndExamOrders" resultMap="MedicalOrderResultMap">
+        SELECT * FROM medical_orders 
+        WHERE order_content LIKE CONCAT('%', #{keyword}, '%')
+        AND patient_id = #{patientId}
+        ORDER BY order_time DESC
+    </select>
+
+    <!-- 开立检验检查医嘱 -->
+    <insert id="addMedicalOrder" useGeneratedKeys="true" keyProperty="orderId">
+        INSERT INTO medical_orders(
+            patient_id,
+            order_time,
+            order_type,
+            order_content,
+            doctor_id,
+            status
+        ) VALUES (
+            #{patientId},
+            #{orderTime},
+            #{orderType},
+            #{orderContent},
+            #{doctorId},
+            '新开'
+        )
+    </insert>
+
+    <!-- 更新医嘱状态 -->
+    <update id="updateOrderStatus">
+        UPDATE medical_orders 
+        SET status = #{status},
+            execution_time = #{executionTime},
+            executor = #{executor},
+            updated_time = CURRENT_TIMESTAMP
+        WHERE order_id = #{orderId}
+    </update>
+
+    <!-- 查询待执行检验检查 -->
+    <select id="getPendingOrders" resultMap="MedicalOrderResultMap">
+        SELECT * FROM medical_orders 
+        WHERE status = '新开' 
+        AND order_content LIKE '%检验%' OR order_content LIKE '%检查%'
+        ORDER BY order_time
+    </select>
+    
+    <!-- 查询新开医嘱（用于提醒） -->
+    <select id="getNewOrders" resultMap="MedicalOrdersResultMap">
+        SELECT * FROM medical_orders 
+        WHERE status = '新开' 
+        AND order_time >= #{startTime}
+    </select>
+</mapper>

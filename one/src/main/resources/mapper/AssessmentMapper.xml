@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="icu.one.mapper.AssessmentMapper">
+
+    <resultMap id="AssessmentResultMap" type="icu.one.entity.Assessment">
+        <id column="assessment_id" property="assessmentId"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="assessment_time" property="assessmentTime"/>
+        <result column="assessment_type" property="assessmentType"/>
+        <result column="score" property="score"/>
+        <result column="assessor" property="assessor"/>
+        <result column="details" property="details"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <!-- 查询患者评估记录 -->
+    <select id="getAssessmentsByPatientId" resultMap="AssessmentResultMap">
+        SELECT * FROM assessments 
+        WHERE patient_id = #{patientId} 
+        ORDER BY assessment_time DESC
+    </select>
+
+    <!-- 添加评估记录 -->
+    <insert id="addAssessment" useGeneratedKeys="true" keyProperty="assessmentId">
+        INSERT INTO assessments(
+            patient_id,
+            assessment_time,
+            assessment_type,
+            score,
+            assessor,
+            details
+        ) VALUES (
+            #{patientId},
+            #{assessmentTime},
+            #{assessmentType},
+            #{score},
+            #{assessor},
+            #{details}
+        )
+    </insert>
+
+    <!-- 查询患者重要评分 -->
+    <select id="getImportantAssessments" resultMap="AssessmentsResultMap">
+        SELECT * FROM assessments 
+        WHERE patient_id = #{patientId} 
+        AND assessment_type IN ('APACHE', 'SOFA', 'GCS')
+        ORDER BY assessment_time DESC
+    </select>
+
+    <!-- 查询24小时神志变化(GCS评分) -->
+    <select id="getConsciousnessChanges" resultMap="AssessmentsResultMap">
+        SELECT * FROM assessments 
+        WHERE patient_id = #{patientId} 
+        AND assessment_type = 'GCS'
+        AND assessment_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        ORDER BY assessment_time
+    </select>
+
+    <!-- 查询评分趋势 -->
+    <select id="getAssessmentTrend" resultMap="AssessmentsResultMap">
+        SELECT * FROM assessments 
+        WHERE patient_id = #{patientId} 
+        AND assessment_type = #{assessmentType}
+        AND assessment_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY assessment_time
+    </select>
+    <
+    <!-- 查询最新评分 -->
+    <select id="getLatestAssessment" resultMap="AssessmentsResultMap">
+        SELECT * FROM assessments 
+        WHERE patient_id = #{patientId} 
+        AND assessment_type = #{assessmentType}
+        ORDER BY assessment_time DESC 
+        LIMIT 1
+    </select>
+</mapper>

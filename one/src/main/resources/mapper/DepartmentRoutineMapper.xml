@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="icu.one.mapper.DepartmentRoutineMapper">
+
+    <resultMap id="DepartmentRoutineResultMap" type="icu.one.entity.DepartmentRoutine">
+        <id column="routine_id" property="routineId"/>
+        <result column="department" property="department"/>
+        <result column="routine_name" property="routineName"/>
+        <result column="description" property="description"/>
+        <result column="trigger_event" property="triggerEvent"/>
+        <result column="trigger_time" property="triggerTime"/>
+        <result column="delay_minutes" property="delayMinutes"/>
+        <result column="template_id" property="templateId"/>
+        <result column="is_active" property="isActive"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <resultMap id="DepartmentRoutineWithTemplateResultMap" type="icu.one.entity.DepartmentRoutine" extends="DepartmentRoutineResultMap">
+        <association property="taskTemplate" javaType="icu.one.entity.TaskTemplate">
+            <id column="template_id" property="templateId"/>
+            <result column="task_name" property="taskName"/>
+            <result column="task_type" property="taskType"/>
+            <result column="frequency" property="frequency"/>
+            <result column="default_assignee_role" property="defaultAssigneeRole"/>
+        </association>
+    </resultMap>
+
+    <!-- 查询所有科室常规配置 -->
+    <select id="selectAllRoutines" resultMap="DepartmentRoutineWithTemplateResultMap">
+        SELECT 
+            dr.*,
+            tt.task_name,
+            tt.task_type,
+            tt.frequency,
+            tt.default_assignee_role
+        FROM department_routines dr
+        LEFT JOIN task_templates tt ON dr.template_id = tt.template_id
+        WHERE dr.is_active = TRUE
+        ORDER BY dr.department, dr.routine_name
+    </select>
+
+    <!-- 根据ID查询科室常规配置 -->
+    <select id="getRoutineById" resultMap="DepartmentRoutineWithTemplateResultMap">
+        SELECT 
+            dr.*,
+            tt.task_name,
+            tt.task_type,
+            tt.frequency,
+            tt.default_assignee_role
+        FROM department_routines dr
+        LEFT JOIN task_templates tt ON dr.template_id = tt.template_id
+        WHERE dr.routine_id = #{routineId}
+    </select>
+
+    <!-- 根据科室查询常规配置 -->
+    <select id="getRoutinesByDepartment" resultMap="DepartmentRoutineWithTemplateResultMap">
+        SELECT 
+            dr.*,
+            tt.task_name,
+            tt.task_type,
+            tt.frequency,
+            tt.default_assignee_role
+        FROM department_routines dr
+        LEFT JOIN task_templates tt ON dr.template_id = tt.template_id
+        WHERE dr.department = #{department} AND dr.is_active = TRUE
+        ORDER BY dr.trigger_event, dr.routine_name
+    </select>
+
+    <!-- 根据触发事件查询配置 -->
+    <select id="getRoutinesByTriggerEvent" resultMap="DepartmentRoutineWithTemplateResultMap">
+        SELECT 
+            dr.*,
+            tt.task_name,
+            tt.task_type,
+            tt.frequency,
+            tt.default_assignee_role
+        FROM department_routines dr
+        LEFT JOIN task_templates tt ON dr.template_id = tt.template_id
+        WHERE dr.trigger_event = #{triggerEvent} AND dr.is_active = TRUE
+        ORDER BY dr.department
+    </select>
+
+    <!-- 添加科室常规配置 -->
+    <insert id="addDepartmentRoutine" useGeneratedKeys="true" keyProperty="routineId">
+        INSERT INTO department_routines(
+            department, routine_name, description, trigger_event,
+            trigger_time, delay_minutes, template_id, is_active, created_by
+        ) VALUES (
+            #{department}, #{routineName}, #{description}, #{triggerEvent},
+            #{triggerTime}, #{delayMinutes}, #{templateId}, #{isActive}, #{createdBy}
+        )
+    </insert>
+
+    <!-- 更新科室常规配置 -->
+    <update id="updateDepartmentRoutine">
+        UPDATE department_routines 
+        SET department = #{department},
+            routine_name = #{routineName},
+            description = #{description},
+            trigger_event = #{triggerEvent},
+            trigger_time = #{triggerTime},
+            delay_minutes = #{delayMinutes},
+            template_id = #{templateId},
+            is_active = #{isActive},
+            created_by = #{createdBy}
+        WHERE routine_id = #{routineId}
+    </update>
+
+    <!-- 启用/禁用常规配置 -->
+    <update id="toggleRoutineStatus">
+        UPDATE department_routines 
+        SET is_active = #{isActive}
+        WHERE routine_id = #{routineId}
+    </update>
+
+    <!-- 删除科室常规配置 -->
+    <delete id="deleteDepartmentRoutine">
+        DELETE FROM department_routines WHERE routine_id = #{routineId}
+    </delete>
+
+    <!-- 根据患者入院事件生成任务 -->
+    <select id="getRoutinesForPatientAdmission" resultMap="DepartmentRoutineWithTemplateResultMap">
+        SELECT 
+            dr.*,
+            tt.task_name,
+            tt.task_type,
+            tt.frequency,
+            tt.default_assignee_role,
+            tt.estimated_duration
+        FROM department_routines dr
+        LEFT JOIN task_templates tt ON dr.template_id = tt.template_id
+        WHERE dr.trigger_event = '患者入院' 
+            AND dr.is_active = TRUE 
+            AND tt.is_active = TRUE
+            AND (dr.department = #{department} OR dr.department IS NULL)
+    </select>
+
+    <!-- 统计各科室常规配置数量 -->
+    <select id="getRoutineStatistics" resultType="map">
+        SELECT 
+            department,
+            trigger_event,
+            COUNT(*) as count,
+            SUM(CASE WHEN is_active = TRUE THEN 1 ELSE 0 END) as active_count
+        FROM department_routines 
+        GROUP BY department, trigger_event
+        ORDER BY department, trigger_event
+    </select>
+
+</mapper>

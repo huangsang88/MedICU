@@ -214,6 +214,135 @@ CREATE TABLE operation_logs (
     INDEX idx_module (module)
 );
 
+-- 6.任务模板表
+CREATE TABLE task_templates (
+    template_id INT PRIMARY KEY AUTO_INCREMENT,
+    task_name VARCHAR(200) NOT NULL,
+    description TEXT,
+    task_type ENUM('日常护理', '医疗操作', '文书工作', '其他') NOT NULL,
+    frequency ENUM('一次性', '每日', '每周', '每月', '按需') NOT NULL,
+    department VARCHAR(50) NOT NULL,
+    trigger_condition TEXT COMMENT '触发条件，如：患者入院后2小时',
+    default_assignee_role ENUM('医生', '护士') NOT NULL,
+    estimated_duration INT COMMENT '预计耗时(分钟)',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by INT NOT NULL,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(user_id),
+    INDEX idx_department (department),
+    INDEX idx_task_type (task_type),
+    INDEX idx_frequency (frequency)
+);
+
+-- 7.任务实例表
+CREATE TABLE tasks (
+    task_id INT PRIMARY KEY AUTO_INCREMENT,
+    template_id INT,
+    patient_id INT,
+    task_name VARCHAR(200) NOT NULL,
+    description TEXT,
+    assigned_to INT NOT NULL,
+    scheduled_time DATETIME NOT NULL,
+    due_time DATETIME,
+    status ENUM('待完成', '进行中', '已完成', '已取消', '已过期') DEFAULT '待完成',
+    priority ENUM('低', '中', '高', '紧急') DEFAULT '中',
+    completion_time DATETIME,
+    completion_notes TEXT,
+    created_by INT NOT NULL,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (template_id) REFERENCES task_templates(template_id),
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
+    FOREIGN KEY (assigned_to) REFERENCES users(user_id),
+    FOREIGN KEY (created_by) REFERENCES users(user_id),
+    INDEX idx_scheduled_time (scheduled_time),
+    INDEX idx_status (status),
+    INDEX idx_assigned_to (assigned_to),
+    INDEX idx_patient_id (patient_id)
+);
+
+--8. 任务提醒表
+CREATE TABLE task_reminders (
+    reminder_id INT PRIMARY KEY AUTO_INCREMENT,
+    task_id INT NOT NULL,
+    user_id INT NOT NULL,
+    reminder_time DATETIME NOT NULL,
+    message TEXT NOT NULL,
+    reminder_type ENUM('系统', '短信', '邮件', '推送') DEFAULT '系统',
+    status ENUM('待发送', '已发送', '已读', '失败') DEFAULT '待发送',
+    sent_time DATETIME,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (task_id) REFERENCES tasks(task_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    INDEX idx_reminder_time (reminder_time),
+    INDEX idx_status (status),
+    INDEX idx_user_id (user_id)
+);
+
+-- 9. 科室常规任务配置表
+CREATE TABLE department_routines (
+    routine_id INT PRIMARY KEY AUTO_INCREMENT,
+    department VARCHAR(50) NOT NULL,
+    routine_name VARCHAR(200) NOT NULL,
+    description TEXT,
+    trigger_event ENUM('患者入院', '交班时', '特定时间', '医嘱下达') NOT NULL,
+    trigger_time TIME COMMENT '如果是特定时间触发',
+    delay_minutes INT COMMENT '延迟分钟数',
+    template_id INT NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by INT NOT NULL,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (template_id) REFERENCES task_templates(template_id),
+    FOREIGN KEY (created_by) REFERENCES users(user_id),
+    INDEX idx_department (department),
+    INDEX idx_trigger_event (trigger_event)
+);
+
+-- 10.实验室检验数据表
+CREATE TABLE lab_results (
+    result_id INT PRIMARY KEY AUTO_INCREMENT,
+    patient_id INT NOT NULL,
+    test_time DATETIME NOT NULL,
+    test_type ENUM('血气', '血糖', '电解质', '其他') NOT NULL,
+    parameter_name VARCHAR(100) NOT NULL, -- 如 'pH', '葡萄糖'
+    value DECIMAL(8,2),
+    unit VARCHAR(20),
+    reference_range VARCHAR(100),
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+);
+
+-- 11. 出入量明细表
+CREATE TABLE intake_output (
+    record_id INT PRIMARY KEY AUTO_INCREMENT,
+    patient_id INT NOT NULL,
+    record_time DATETIME NOT NULL,
+    type ENUM('摄入', '排出') NOT NULL,
+    category ENUM('晶体', '胶体', '肠胃营养', '尿液', '其他') NOT NULL,
+    volume_ml INT NOT NULL, -- 容量（毫升）
+    description VARCHAR(200),
+    shift_type ENUM('白班', '夜班'), -- 关联班次
+    nurse_id INT NOT NULL,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+);
+
+-- 12. 管路和皮肤信息表
+CREATE TABLE patient_tubes_skin (
+    record_id INT PRIMARY KEY AUTO_INCREMENT,
+    patient_id INT NOT NULL,
+    record_time DATETIME NOT NULL,
+    type ENUM('管路', '皮肤') NOT NULL,
+    anatomical_location VARCHAR(100) NOT NULL, -- 解剖位置，如 '右颈内静脉'
+    description TEXT, -- 详细信息
+    status ENUM('正常', '异常', '风险'),
+    image_or_model_ref VARCHAR(255), -- 关联3D模型坐标
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+);
+
+
 -- 插入初始系统配置
 INSERT INTO system_config (config_key, config_value, description) VALUES
 ('system_name', '临床ICU信息系统', '系统名称'),

@@ -1,115 +1,33 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="icu.one.mapper.UsersMapper">
-    <!-- 查询所有患者 -->
-    <select id="selectAllPatients" resultMap="PatientResultMap">
-        SELECT * FROM patients ORDER BY admission_time DESC
+<mapper namespace="icu.one.mapper.UserMapper">
+
+    <resultMap id="UserResultMap" type="icu.one.entity.User">
+        <id column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="real_name" property="realName"/>
+        <result column="role" property="role"/>
+        <result column="department" property="department"/>
+        <result column="status" property="status"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <!-- 查询所有用户 -->
+    <select id="selectAllUsers" resultMap="UserResultMap">
+        SELECT * FROM users ORDER BY user_id
     </select>
 
-    <!-- 根据ID查询患者 -->
-    <select id="getPatientById" resultMap="PatientResultMap">
-        SELECT * FROM patients WHERE patient_id = #{patientId}
+    <!-- 根据角色查询用户 -->
+    <select id="getUsersByRole" resultMap="UserResultMap">
+        SELECT * FROM users WHERE role = #{role} AND status = '启用'
     </select>
 
-    <!-- 根据病历号查询患者 -->
-    <select id="getPatientByMedicalRecordNo" resultMap="PatientResultMap">
-        SELECT * FROM patients WHERE medical_record_no = #{medicalRecordNo}
+    <!-- 用户登录验证 -->
+    <select id="login" resultMap="UserResultMap">
+        SELECT * FROM users 
+        WHERE username = #{username} AND password = #{password} AND status = '启用'
     </select>
 
-    <!-- 查询入科患者列表（状态为住院） -->
-    <select id="getAdmittedPatients" resultMap="PatientResultMap">
-        SELECT * FROM patients WHERE status = '住院' ORDER BY admission_time DESC
-    </select>
-
-    <!-- 查询出院患者 -->
-    <select id="getDischargedPatients" resultMap="PatientResultMap">
-        SELECT * FROM patients WHERE status = '出院' ORDER BY discharge_time DESC
-    </select>
-
-    <!-- 查询转科患者 -->
-    <select id="getTransferredPatients" resultMap="PatientResultMap">
-        SELECT * FROM patients WHERE status = '转科' ORDER BY updated_time DESC
-    </select>
-
-    <!-- 手动登记患者（紧急情况，支持部分字段） -->
-    <insert id="registerEmergencyPatient" useGeneratedKeys="true" keyProperty="patientId">
-        INSERT INTO patients(
-            medical_record_no,
-            name,
-            gender,
-            admission_time,
-            status
-        ) VALUES (
-            #{medicalRecordNo},
-            #{name},
-            #{gender},
-            #{admissionTime},
-            '住院'
-        )
-    </insert>
-
-    <!-- 完善患者信息 -->
-    <update id="updatePatientInfo">
-        UPDATE patients 
-        SET medical_record_no = #{medicalRecordNo},
-            name = #{name},
-            gender = #{gender},
-            age = #{age},
-            admission_time = #{admissionTime},
-            discharge_time = #{dischargeTime},
-            diagnosis = #{diagnosis},
-            status = #{status},
-            updated_time = CURRENT_TIMESTAMP
-        WHERE patient_id = #{patientId}
-    </update>
-
-    <!-- 更新患者状态 -->
-    <update id="updatePatientStatus">
-        UPDATE patients 
-        SET status = #{status},
-            updated_time = CURRENT_TIMESTAMP
-        <if test="status == '出院' and dischargeTime != null">
-            , discharge_time = #{dischargeTime}
-        </if>
-        WHERE patient_id = #{patientId}
-    </update>
-
-    <!-- 删除患者 -->
-    <delete id="deletePatient">
-        DELETE FROM patients WHERE patient_id = #{patientId}
-    </delete>
-
-    <!-- 查询患者流转情况（包含关键时间线） -->
-    <select id="getPatientFlow" resultMap="PatientResultMap">
-        SELECT * FROM patients 
-        WHERE patient_id = #{patientId}
-    </select>
-
-    <!-- 根据姓名模糊查询患者 -->
-    <select id="searchPatientsByName" resultMap="PatientResultMap">
-        SELECT * FROM patients 
-        WHERE name LIKE CONCAT('%', #{name}, '%')
-        ORDER BY admission_time DESC
-    </select>
-
-    <!-- 统计患者数量 -->
-    <select id="countPatientsByStatus" resultType="map">
-        SELECT 
-            status,
-            COUNT(*) as count
-        FROM patients 
-        GROUP BY status
-    </select>
-
-    <!-- 批量更新患者状态 -->
-    <update id="batchUpdatePatientStatus">
-        UPDATE patients 
-        SET status = #{status},
-            updated_time = CURRENT_TIMESTAMP
-        WHERE patient_id IN 
-        <foreach collection="patientIds" item="patientId" open="(" separator="," close=")">
-            #{patientId}
-        </foreach>
-    </update>
-    
 </mapper>

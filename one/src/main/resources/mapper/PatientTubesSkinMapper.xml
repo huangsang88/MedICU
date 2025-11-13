@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="icu.one.mapper.PatientTubesSkinMapper">
+
+    <resultMap id="PatientTubesSkinResultMap" type="icu.one.entity.PatientTubesSkin">
+        <id column="record_id" property="recordId"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="record_time" property="recordTime"/>
+        <result column="type" property="type"/>
+        <result column="anatomical_location" property="anatomicalLocation"/>
+        <result column="description" property="description"/>
+        <result column="status" property="status"/>
+        <result column="image_or_model_ref" property="imageOrModelRef"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <!-- 查询患者管路信息 -->
+    <select id="getPatientTubes" resultMap="PatientTubesSkinResultMap">
+        SELECT * FROM patient_tubes_skin 
+        WHERE patient_id = #{patientId} 
+        AND type = '管路'
+        ORDER BY record_time DESC
+    </select>
+
+    <!-- 查询患者皮肤信息 -->
+    <select id="getPatientSkin" resultMap="PatientTubesSkinResultMap">
+        SELECT * FROM patient_tubes_skin 
+        WHERE patient_id = #{patientId} 
+        AND type = '皮肤'
+        ORDER BY record_time DESC
+    </select>
+
+    <!-- 查询3D模型所需的管路皮肤信息 -->
+    <select id="get3DModelData" resultMap="PatientTubesSkinResultMap">
+        SELECT * FROM patient_tubes_skin 
+        WHERE patient_id = #{patientId} 
+        AND status IN ('异常', '风险')
+        ORDER BY type, anatomical_location
+    </select>
+
+    <!-- 添加管路皮肤记录 -->
+    <insert id="addPatientTubesSkin" useGeneratedKeys="true" keyProperty="recordId">
+        INSERT INTO patient_tubes_skin(
+            patient_id, record_time, type, anatomical_location,
+            description, status, image_or_model_ref
+        ) VALUES (
+            #{patientId}, #{recordTime}, #{type}, #{anatomicalLocation},
+            #{description}, #{status}, #{imageOrModelRef}
+        )
+    </insert>
+
+    <!-- 更新管路皮肤状态 -->
+    <update id="updateTubesSkinStatus">
+        UPDATE patient_tubes_skin 
+        SET status = #{status},
+            description = #{description}
+        WHERE record_id = #{recordId}
+    </update>
+
+</mapper>

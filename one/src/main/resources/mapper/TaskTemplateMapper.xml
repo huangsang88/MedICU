@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="icu.one.mapper.TaskTemplateMapper">
+
+    <resultMap id="TaskTemplateResultMap" type="icu.one.entity.TaskTemplate">
+        <id column="template_id" property="templateId"/>
+        <result column="task_name" property="taskName"/>
+        <result column="description" property="description"/>
+        <result column="task_type" property="taskType"/>
+        <result column="frequency" property="frequency"/>
+        <result column="department" property="department"/>
+        <result column="trigger_condition" property="triggerCondition"/>
+        <result column="default_assignee_role" property="defaultAssigneeRole"/>
+        <result column="estimated_duration" property="estimatedDuration"/>
+        <result column="is_active" property="isActive"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <!-- 查询所有任务模板 -->
+    <select id="selectAllTemplates" resultMap="TaskTemplateResultMap">
+        SELECT * FROM task_templates WHERE is_active = TRUE ORDER BY created_time DESC
+    </select>
+
+    <!-- 根据ID查询任务模板 -->
+    <select id="getTemplateById" resultMap="TaskTemplateResultMap">
+        SELECT * FROM task_templates WHERE template_id = #{templateId}
+    </select>
+
+    <!-- 根据科室查询任务模板 -->
+    <select id="getTemplatesByDepartment" resultMap="TaskTemplateResultMap">
+        SELECT * FROM task_templates 
+        WHERE department = #{department} AND is_active = TRUE 
+        ORDER BY task_type, task_name
+    </select>
+
+    <!-- 根据任务类型查询模板 -->
+    <select id="getTemplatesByType" resultMap="TaskTemplateResultMap">
+        SELECT * FROM task_templates 
+        WHERE task_type = #{taskType} AND is_active = TRUE 
+        ORDER BY task_name
+    </select>
+
+    <!-- 根据频率查询模板 -->
+    <select id="getTemplatesByFrequency" resultMap="TaskTemplateResultMap">
+        SELECT * FROM task_templates 
+        WHERE frequency = #{frequency} AND is_active = TRUE 
+        ORDER BY task_name
+    </select>
+
+    <!-- 添加任务模板 -->
+    <insert id="addTaskTemplate" useGeneratedKeys="true" keyProperty="templateId">
+        INSERT INTO task_templates(
+            task_name, description, task_type, frequency, department,
+            trigger_condition, default_assignee_role, estimated_duration,
+            is_active, created_by
+        ) VALUES (
+            #{taskName}, #{description}, #{taskType}, #{frequency}, #{department},
+            #{triggerCondition}, #{defaultAssigneeRole}, #{estimatedDuration},
+            #{isActive}, #{createdBy}
+        )
+    </insert>
+
+    <!-- 更新任务模板 -->
+    <update id="updateTaskTemplate">
+        UPDATE task_templates 
+        SET task_name = #{taskName},
+            description = #{description},
+            task_type = #{taskType},
+            frequency = #{frequency},
+            department = #{department},
+            trigger_condition = #{triggerCondition},
+            default_assignee_role = #{defaultAssigneeRole},
+            estimated_duration = #{estimatedDuration},
+            is_active = #{isActive},
+            updated_time = CURRENT_TIMESTAMP
+        WHERE template_id = #{templateId}
+    </update>
+
+    <!-- 启用/禁用任务模板 -->
+    <update id="toggleTemplateStatus">
+        UPDATE task_templates 
+        SET is_active = #{isActive},
+            updated_time = CURRENT_TIMESTAMP
+        WHERE template_id = #{templateId}
+    </update>
+
+    <!-- 删除任务模板 -->
+    <delete id="deleteTaskTemplate">
+        DELETE FROM task_templates WHERE template_id = #{templateId}
+    </delete>
+
+    <!-- 统计各类型任务模板数量 -->
+    <select id="getTemplateStatistics" resultType="map">
+        SELECT 
+            task_type,
+            COUNT(*) as count,
+            SUM(CASE WHEN is_active = TRUE THEN 1 ELSE 0 END) as active_count
+        FROM task_templates 
+        GROUP BY task_type
+        ORDER BY task_type
+    </select>
+
+</mapper>

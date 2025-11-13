@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="icu.one.mapper.TreatmentRecordMapper">
+
+    <resultMap id="TreatmentRecordResultMap" type="icu.one.entity.TreatmentRecord">
+        <id column="treatment_id" property="treatmentId"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="treatment_time" property="treatmentTime"/>
+        <result column="treatment_type" property="treatmentType"/>
+        <result column="doctor_id" property="doctorId"/>
+        <result column="content" property="content"/>
+        <result column="outcome" property="outcome"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <!-- 查询患者治疗记录 -->
+    <select id="getTreatmentRecordsByPatientId" resultMap="TreatmentRecordResultMap">
+        SELECT * FROM treatment_records 
+        WHERE patient_id = #{patientId} 
+        ORDER BY treatment_time DESC
+    </select>
+
+    <!-- 添加治疗记录 -->
+    <insert id="addTreatmentRecord" useGeneratedKeys="true" keyProperty="treatmentId">
+        INSERT INTO treatment_records(
+            patient_id,
+            treatment_time,
+            treatment_type,
+            doctor_id,
+            content,
+            outcome
+        ) VALUES (
+            #{patientId},
+            #{treatmentTime},
+            #{treatmentType},
+            #{doctorId},
+            #{content},
+            #{outcome}
+        )
+    </insert>
+
+</mapper>

@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="icu.one.mapper.TaskMapper">
+
+    <resultMap id="TaskResultMap" type="icu.one.entity.Task">
+        <id column="task_id" property="taskId"/>
+        <result column="template_id" property="templateId"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="task_name" property="taskName"/>
+        <result column="description" property="description"/>
+        <result column="assigned_to" property="assignedTo"/>
+        <result column="scheduled_time" property="scheduledTime"/>
+        <result column="due_time" property="dueTime"/>
+        <result column="status" property="status"/>
+        <result column="priority" property="priority"/>
+        <result column="completion_time" property="completionTime"/>
+        <result column="completion_notes" property="completionNotes"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <resultMap id="TaskWithDetailsResultMap" type="icu.one.entity.Task" extends="TaskResultMap">
+        <association property="patient" javaType="icu.one.entity.Patient">
+            <id column="patient_id" property="patientId"/>
+            <result column="medical_record_no" property="medicalRecordNo"/>
+            <result column="patient_name" property="name"/>
+        </association>
+        <association property="assignee" javaType="icu.one.entity.User">
+            <id column="user_id" property="userId"/>
+            <result column="real_name" property="realName"/>
+            <result column="role" property="role"/>
+        </association>
+        <association property="creator" javaType="icu.one.entity.User">
+            <id column="creator_id" property="userId"/>
+            <result column="creator_name" property="realName"/>
+        </association>
+    </resultMap>
+
+    <!-- 查询所有任务 -->
+    <select id="selectAllTasks" resultMap="TaskWithDetailsResultMap">
+        SELECT 
+            t.*,
+            p.medical_record_no,
+            p.name as patient_name,
+            u.real_name,
+            u.role,
+            uc.real_name as creator_name
+        FROM tasks t
+        LEFT JOIN patients p ON t.patient_id = p.patient_id
+        LEFT JOIN users u ON t.assigned_to = u.user_id
+        LEFT JOIN users uc ON t.created_by = uc.user_id
+        ORDER BY t.scheduled_time DESC
+    </select>
+
+    <!-- 根据ID查询任务 -->
+    <select id="getTaskById" resultMap="TaskWithDetailsResultMap">
+        SELECT 
+            t.*,
+            p.medical_record_no,
+            p.name as patient_name,
+            u.real_name,
+            u.role,
+            uc.real_name as creator_name
+        FROM tasks t
+        LEFT JOIN patients p ON t.patient_id = p.patient_id
+        LEFT JOIN users u ON t.assigned_to = u.user_id
+        LEFT JOIN users uc ON t.created_by = uc.user_id
+        WHERE t.task_id = #{taskId}
+    </select>
+
+    <!-- 根据状态查询任务 -->
+    <select id="getTasksByStatus" resultMap="TaskWithDetailsResultMap">
+        SELECT 
+            t.*,
+            p.medical_record_no,
+            p.name as patient_name,
+            u.real_name,
+            u.role
+        FROM tasks t
+        LEFT JOIN patients p ON t.patient_id = p.patient_id
+        LEFT JOIN users u ON t.assigned_to = u.user_id
+        WHERE t.status = #{status}
+        ORDER BY t.priority DESC, t.scheduled_time
+    </select>
+
+    <!-- 根据分配人查询任务 -->
+    <select id="getTasksByAssignee" resultMap="TaskWithDetailsResultMap">
+        SELECT 
+            t.*,
+            p.medical_record_no,
+            p.name as patient_name,
+            u.real_name,
+            u.role
+        FROM tasks t
+        LEFT JOIN patients p ON t.patient_id = p.patient_id
+        LEFT JOIN users u ON t.assigned_to = u.user_id
+        WHERE t.assigned_to = #{userId}
+        ORDER BY t.priority DESC, t.scheduled_time
+    </select>
+
+    <!-- 根据患者查询任务 -->
+    <select id="getTasksByPatient" resultMap="TaskWithDetailsResultMap">
+        SELECT 
+            t.*,
+            p.medical_record_no,
+            p.name as patient_name,
+            u.real_name,
+            u.role
+        FROM tasks t
+        LEFT JOIN patients p ON t.patient_id = p.patient_id
+        LEFT JOIN users u ON t.assigned_to = u.user_id
+        WHERE t.patient_id = #{patientId}
+        ORDER BY t.scheduled_time DESC
+    </select>
+
+    <!-- 日历视图查询 - 按日期范围查询任务 -->
+    <select id="getTasksByDateRange" resultMap="TaskWithDetailsResultMap">
+        SELECT 
+            t.*,
+            p.medical_record_no,
+            p.name as patient_name,
+            u.real_name,
+            u.role
+        FROM tasks t
+        LEFT JOIN patients p ON t.patient_id = p.patient_id
+        LEFT JOIN users u ON t.assigned_to = u.user_id
+        WHERE DATE(t.scheduled_time) BETWEEN #{startDate} AND #{endDate}
+        ORDER BY t.scheduled_time, t.priority DESC
+    </select>
+
+    <!-- 查询今日任务 -->
+    <select id="getTodayTasks" resultMap="TaskWithDetailsResultMap">
+        SELECT 
+            t.*,
+            p.medical_record_no,
+            p.name as patient_name,
+            u.real_name,
+            u.role
+        FROM tasks t
+        LEFT JOIN patients p ON t.patient_id = p.patient_id
+        LEFT JOIN users u ON t.assigned_to = u.user_id
+        WHERE DATE(t.scheduled_time) = CURDATE()
+        ORDER BY t.priority DESC, t.scheduled_time
+    </select>
+
+    <!-- 查询过期任务 -->
+    <select id="getOverdueTasks" resultMap="TaskWithDetailsResultMap">
+        SELECT 
+            t.*,
+            p.medical_record_no,
+            p.name as patient_name,
+            u.real_name,
+            u.role
+        FROM tasks t
+        LEFT JOIN patients p ON t.patient_id = p.patient_id
+        LEFT JOIN users u ON t.assigned_to = u.user_id
+        WHERE t.due_time < NOW() AND t.status IN ('待完成', '进行中')
+        ORDER BY t.due_time
+    </select>
+
+    <!-- 添加任务 -->
+    <insert id="addTask" useGeneratedKeys="true" keyProperty="taskId">
+        INSERT INTO tasks(
+            template_id, patient_id, task_name, description,
+            assigned_to, scheduled_time, due_time, status,
+            priority, created_by
+        ) VALUES (
+            #{templateId}, #{patientId}, #{taskName}, #{description},
+            #{assignedTo}, #{scheduledTime}, #{dueTime}, #{status},
+            #{priority}, #{createdBy}
+        )
+    </insert>
+
+    <!-- 更新任务 -->
+    <update id="updateTask">
+        UPDATE tasks 
+        SET template_id = #{templateId},
+            patient_id = #{patientId},
+            task_name = #{taskName},
+            description = #{description},
+            assigned_to = #{assignedTo},
+            scheduled_time = #{scheduledTime},
+            due_time = #{dueTime},
+            status = #{status},
+            priority = #{priority},
+            completion_time = #{completionTime},
+            completion_notes = #{completionNotes},
+            updated_time = CURRENT_TIMESTAMP
+        WHERE task_id = #{taskId}
+    </update>
+
+    <!-- 更新任务状态 -->
+    <update id="updateTaskStatus">
+        UPDATE tasks 
+        SET status = #{status},
+            completion_time = #{completionTime},
+            completion_notes = #{completionNotes},
+            updated_time = CURRENT_TIMESTAMP
+        WHERE task_id = #{taskId}
+    </update>
+
+    <!-- 重新分配任务 -->
+    <update id="reassignTask">
+        UPDATE tasks 
+        SET assigned_to = #{assignedTo},
+            updated_time = CURRENT_TIMESTAMP
+        WHERE task_id = #{taskId}
+    </update>
+
+    <!-- 批量更新任务状态 -->
+    <update id="batchUpdateTaskStatus">
+        UPDATE tasks 
+        SET status = #{status},
+            updated_time = CURRENT_TIMESTAMP
+        WHERE task_id IN 
+        <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+            #{taskId}
+        </foreach>
+    </update>
+
+    <!-- 删除任务 -->
+    <delete id="deleteTask">
+        DELETE FROM tasks WHERE task_id = #{taskId}
+    </delete>
+
+    <!-- 统计任务完成情况 -->
+    <select id="getTaskStatistics" resultType="map">
+        SELECT 
+            status,
+            COUNT(*) as count,
+            AVG(TIMESTAMPDIFF(MINUTE, scheduled_time, completion_time)) as avg_completion_minutes
+        FROM tasks 
+        WHERE scheduled_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        GROUP BY status
+    </select>
+
+    <!-- 按优先级统计任务 -->
+    <select id="getTaskStatisticsByPriority" resultType="map">
+        SELECT 
+            priority,
+            status,
+            COUNT(*) as count
+        FROM tasks 
+        WHERE scheduled_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        GROUP BY priority, status
+        ORDER BY priority, status
+    </select>
+
+</mapper>

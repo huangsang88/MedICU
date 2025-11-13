@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="icu.one.mapper.TaskReminderMapper">
+
+    <resultMap id="TaskReminderResultMap" type="icu.one.entity.TaskReminder">
+        <id column="reminder_id" property="reminderId"/>
+        <result column="task_id" property="taskId"/>
+        <result column="user_id" property="userId"/>
+        <result column="reminder_time" property="reminderTime"/>
+        <result column="message" property="message"/>
+        <result column="reminder_type" property="reminderType"/>
+        <result column="status" property="status"/>
+        <result column="sent_time" property="sentTime"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <resultMap id="TaskReminderWithDetailsResultMap" type="icu.one.entity.TaskReminder" extends="TaskReminderResultMap">
+        <association property="task" javaType="icu.one.entity.Task">
+            <id column="task_id" property="taskId"/>
+            <result column="task_name" property="taskName"/>
+            <result column="scheduled_time" property="scheduledTime"/>
+            <result column="priority" property="priority"/>
+        </association>
+        <association property="user" javaType="icu.one.entity.User">
+            <id column="user_id" property="userId"/>
+            <result column="real_name" property="realName"/>
+            <result column="username" property="username"/>
+        </association>
+    </resultMap>
+
+    <!-- 查询所有提醒 -->
+    <select id="selectAllReminders" resultMap="TaskReminderWithDetailsResultMap">
+        SELECT 
+            tr.*,
+            t.task_name,
+            t.scheduled_time,
+            t.priority,
+            u.real_name,
+            u.username
+        FROM task_reminders tr
+        LEFT JOIN tasks t ON tr.task_id = t.task_id
+        LEFT JOIN users u ON tr.user_id = u.user_id
+        ORDER BY tr.reminder_time DESC
+    </select>
+
+    <!-- 根据ID查询提醒 -->
+    <select id="getReminderById" resultMap="TaskReminderWithDetailsResultMap">
+        SELECT 
+            tr.*,
+            t.task_name,
+            t.scheduled_time,
+            t.priority,
+            u.real_name,
+            u.username
+        FROM task_reminders tr
+        LEFT JOIN tasks t ON tr.task_id = t.task_id
+        LEFT JOIN users u ON tr.user_id = u.user_id
+        WHERE tr.reminder_id = #{reminderId}
+    </select>
+
+    <!-- 根据任务ID查询提醒 -->
+    <select id="getRemindersByTaskId" resultMap="TaskReminderWithDetailsResultMap">
+        SELECT 
+            tr.*,
+            t.task_name,
+            t.scheduled_time,
+            t.priority,
+            u.real_name,
+            u.username
+        FROM task_reminders tr
+        LEFT JOIN tasks t ON tr.task_id = t.task_id
+        LEFT JOIN users u ON tr.user_id = u.user_id
+        WHERE tr.task_id = #{taskId}
+        ORDER BY tr.reminder_time
+    </select>
+
+    <!-- 根据用户ID查询提醒 -->
+    <select id="getRemindersByUserId" resultMap="TaskReminderWithDetailsResultMap">
+        SELECT 
+            tr.*,
+            t.task_name,
+            t.scheduled_time,
+            t.priority,
+            u.real_name,
+            u.username
+        FROM task_reminders tr
+        LEFT JOIN tasks t ON tr.task_id = t.task_id
+        LEFT JOIN users u ON tr.user_id = u.user_id
+        WHERE tr.user_id = #{userId}
+        ORDER BY tr.reminder_time DESC
+    </select>
+
+    <!-- 查询待发送的提醒 -->
+    <select id="getPendingReminders" resultMap="TaskReminderWithDetailsResultMap">
+        SELECT 
+            tr.*,
+            t.task_name,
+            t.scheduled_time,
+            t.priority,
+            u.real_name,
+            u.username
+        FROM task_reminders tr
+        LEFT JOIN tasks t ON tr.task_id = t.task_id
+        LEFT JOIN users u ON tr.user_id = u.user_id
+        WHERE tr.status = '待发送' AND tr.reminder_time &lt;= NOW()
+        ORDER BY tr.reminder_time
+    </select>
+
+    <!-- 查询今日提醒 -->
+    <select id="getTodayReminders" resultMap="TaskReminderWithDetailsResultMap">
+        SELECT 
+            tr.*,
+            t.task_name,
+            t.scheduled_time,
+            t.priority,
+            u.real_name,
+            u.username
+        FROM task_reminders tr
+        LEFT JOIN tasks t ON tr.task_id = t.task_id
+        LEFT JOIN users u ON tr.user_id = u.user_id
+        WHERE DATE(tr.reminder_time) = CURDATE()
+        ORDER BY tr.reminder_time
+    </select>
+
+    <!-- 根据状态查询提醒 -->
+    <select id="getRemindersByStatus" resultMap="TaskReminderWithDetailsResultMap">
+        SELECT 
+            tr.*,
+            t.task_name,
+            t.scheduled_time,
+            t.priority,
+            u.real_name,
+            u.username
+        FROM task_reminders tr
+        LEFT JOIN tasks t ON tr.task_id = t.task_id
+        LEFT JOIN users u ON tr.user_id = u.user_id
+        WHERE tr.status = #{status}
+        ORDER BY tr.reminder_time
+    </select>
+
+    <!-- 添加任务提醒 -->
+    <insert id="addTaskReminder" useGeneratedKeys="true" keyProperty="reminderId">
+        INSERT INTO task_reminders(
+            task_id, user_id, reminder_time, message,
+            reminder_type, status
+        ) VALUES (
+            #{taskId}, #{userId}, #{reminderTime}, #{message},
+            #{reminderType}, #{status}
+        )
+    </insert>
+
+    <!-- 批量添加任务提醒 -->
+    <insert id="batchAddTaskReminders">
+        INSERT INTO task_reminders(
+            task_id, user_id, reminder_time, message,
+            reminder_type, status
+        ) VALUES 
+        <foreach collection="reminders" item="reminder" separator=",">
+            (
+                #{reminder.taskId}, #{reminder.userId}, #{reminder.reminderTime}, #{reminder.message},
+                #{reminder.reminderType}, #{reminder.status}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新提醒状态 -->
+    <update id="updateReminderStatus">
+        UPDATE task_reminders 
+        SET status = #{status},
+            sent_time = #{sentTime}
+        WHERE reminder_id = #{reminderId}
+    </update>
+
+    <!-- 批量更新提醒状态 -->
+    <update id="batchUpdateReminderStatus">
+        UPDATE task_reminders 
+        SET status = #{status},
+            sent_time = CURRENT_TIMESTAMP
+        WHERE reminder_id IN 
+        <foreach collection="reminderIds" item="reminderId" open="(" separator="," close=")">
+            #{reminderId}
+        </foreach>
+    </update>
+
+    <!-- 标记提醒为已读 -->
+    <update id="markReminderAsRead">
+        UPDATE task_reminders 
+        SET status = '已读'
+        WHERE reminder_id = #{reminderId} AND user_id = #{userId}
+    </update>
+
+    <!-- 删除任务提醒 -->
+    <delete id="deleteTaskReminder">
+        DELETE FROM task_reminders WHERE reminder_id = #{reminderId}
+    </delete>
+
+    <!-- 根据任务ID删除所有提醒 -->
+    <delete id="deleteRemindersByTaskId">
+        DELETE FROM task_reminders WHERE task_id = #{taskId}
+    </delete>
+
+    <!-- 统计提醒发送情况 -->
+    <select id="getReminderStatistics" resultType="map">
+        SELECT 
+            status,
+            reminder_type,
+            COUNT(*) as count
+        FROM task_reminders 
+        WHERE created_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        GROUP BY status, reminder_type
+        ORDER BY status, reminder_type
+    </select>
+
+    <!-- 获取用户未读提醒数量 -->
+    <select id="getUnreadReminderCount" resultType="int">
+        SELECT COUNT(*) 
+        FROM task_reminders 
+        WHERE user_id = #{userId} AND status = '已发送'
+    </select>
+
+</mapper>
