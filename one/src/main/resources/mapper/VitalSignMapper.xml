@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="icu.one.mapper.VitalSignMapper">
+
+    <!-- 查询患者生命体征趋势 -->
+    <select id="getVitalSignsTrend">
+        SELECT * FROM vital_signs 
+        WHERE patient_id = #{patientId} 
+        AND record_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY record_time
+    </select>
+
+    <!-- 查询单参数生命体征数据 -->
+    <select id="getSingleParameterTrend" >
+        SELECT record_time, 
+        <choose>
+            <when test="parameter == 'temperature'">temperature</when>
+            <when test="parameter == 'heart_rate'">heart_rate</when>
+            <when test="parameter == 'systolic_bp'">systolic_bp</when>
+            <when test="parameter == 'diastolic_bp'">diastolic_bp</when>
+            <when test="parameter == 'respiratory_rate'">respiratory_rate</when>
+            <when test="parameter == 'spo2'">spo2</when>
+        </choose> as value
+        FROM vital_signs 
+        WHERE patient_id = #{patientId} 
+        AND record_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY record_time
+    </select>
+
+    <!-- 查询最新生命体征 -->
+    <select id="getLatestVitalSigns">
+        SELECT * FROM vital_signs 
+        WHERE patient_id = #{patientId} 
+        ORDER BY record_time DESC 
+        LIMIT 1
+    </select>
+
+    <!-- 添加生命体征记录 -->
+    <insert id="addVitalSigns" useGeneratedKeys="true" keyProperty="recordId">
+        INSERT INTO vital_signs(
+            patient_id, record_time, temperature, heart_rate,
+            systolic_bp, diastolic_bp, respiratory_rate, spo2, nurse_id
+        ) VALUES (
+            #{patientId}, #{recordTime}, #{temperature}, #{heartRate},
+            #{systolicBp}, #{diastolicBp}, #{respiratoryRate}, #{spo2}, #{nurseId}
+        )
+    </insert>
+
+    <!-- 批量添加生命体征记录 -->
+    <insert id="batchAddVitalSigns">
+        INSERT INTO vital_signs(
+            patient_id, record_time, temperature, heart_rate,
+            systolic_bp, diastolic_bp, respiratory_rate, spo2, nurse_id
+        ) VALUES 
+        <foreach collection="list" item="record" separator=",">
+            (
+                #{record.patientId}, #{record.recordTime}, #{record.temperature}, #{record.heartRate},
+                #{record.systolicBp}, #{record.diastolicBp}, #{record.respiratoryRate}, #{record.spo2}, #{record.nurseId}
+            )
+        </foreach>
+    </insert>
+
+</mapper>

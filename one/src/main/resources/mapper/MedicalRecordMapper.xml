@@ -2,26 +2,16 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="icu.one.mapper.MedicalRecordMapper">
 
-    <resultMap id="MedicalRecordResultMap" type="icu.one.entity.MedicalRecord">
-        <id column="record_id" property="recordId"/>
-        <result column="patient_id" property="patientId"/>
-        <result column="record_type" property="recordType"/>
-        <result column="record_time" property="recordTime"/>
-        <result column="content" property="content"/>
-        <result column="doctor_id" property="doctorId"/>
-        <result column="department" property="department"/>
-        <result column="created_time" property="createdTime"/>
-    </resultMap>
 
     <!-- 查询患者所有病历记录 -->
-    <select id="getRecordsByPatientId" resultMap="MedicalRecordResultMap">
+    <select id="getRecordsByPatientId" >
         SELECT * FROM medical_records 
         WHERE patient_id = #{patientId} 
         ORDER BY record_time DESC
     </select>
 
     <!-- 查询检验检查报告 -->
-    <select id="getLabReports" resultMap="MedicalRecordResultMap">
+    <select id="getLabReports" >
         SELECT * FROM medical_records 
         WHERE patient_id = #{patientId} 
         AND content LIKE '%检验%' OR content LIKE '%检查%'
@@ -48,7 +38,7 @@
     </insert>
 
     <!-- 查询患者在科期间的记录 -->
-    <select id="getRecordsDuringStay" resultMap="MedicalRecordResultMap">
+    <select id="getRecordsDuringStay" >
         SELECT mr.* FROM medical_records mr
         JOIN patients p ON mr.patient_id = p.patient_id
         WHERE mr.patient_id = #{patientId}

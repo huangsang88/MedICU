@@ -2,42 +2,42 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="icu.one.mapper.BedMapper">
 <!-- 查询所有床位 -->
-    <select id="selectAllBeds" resultMap="BedResultMap">
+    <select id="selectAllBeds" >
         SELECT * FROM beds ORDER BY bed_no
     </select>
 
     <!-- 根据床位ID查询床位 -->
-    <select id="getBedById" resultMap="BedResultMap">
+    <select id="getBedById" >
         SELECT * FROM beds WHERE bed_id = #{bedId}
     </select>
 
     <!-- 根据床位号查询床位 -->
-    <select id="getBedByNo" resultMap="BedResultMap">
+    <select id="getBedByNo" >
         SELECT * FROM beds WHERE bed_no = #{bedNo}
     </select>
 
     <!-- 根据科室查询床位 -->
-    <select id="getBedsByDepartment" resultMap="BedResultMap">
+    <select id="getBedsByDepartment" >
         SELECT * FROM beds WHERE department = #{department} ORDER BY bed_no
     </select>
 
     <!-- 根据状态查询床位 -->
-    <select id="getBedsByStatus" resultMap="BedResultMap">
+    <select id="getBedsByStatus" >
         SELECT * FROM beds WHERE status = #{status} ORDER BY bed_no
     </select>
 
     <!-- 查询空闲床位 -->
-    <select id="getAvailableBeds" resultMap="BedResultMap">
+    <select id="getAvailableBeds">
         SELECT * FROM beds WHERE status = '空闲' ORDER BY bed_no
     </select>
 
     <!-- 查询占用床位 -->
-    <select id="getOccupiedBeds" resultMap="BedResultMap">
+    <select id="getOccupiedBeds">
         SELECT * FROM beds WHERE status = '占用' ORDER BY bed_no
     </select>
 
     <!-- 查询所有床位及患者信息 -->
-    <select id="getBedsWithPatients" resultMap="BedWithPatientResultMap">
+    <select id="getBedsWithPatients">
         SELECT 
             b.*,
             p.patient_id,
@@ -146,7 +146,7 @@
     </delete>
 
     <!-- 统计科室床位使用情况 -->
-    <select id="getBedStatisticsByDepartment" resultType="map">
+    <select id="getBedStatisticsByDepartment" >
         SELECT 
             department,
             COUNT(*) as total_beds,
@@ -159,7 +159,7 @@
     </select>
 
     <!-- 获取所有科室床位统计 -->
-    <select id="getAllBedStatistics" resultType="map">
+    <select id="getAllBedStatistics" >
         SELECT 
             department,
             COUNT(*) as total_beds,
@@ -172,7 +172,7 @@
     </select>
 
     <!-- 根据患者ID查询床位 -->
-    <select id="getBedByPatientId" resultMap="BedResultMap">
+    <select id="getBedByPatientId" >
         SELECT * FROM beds WHERE patient_id = #{patientId}
     </select>
 

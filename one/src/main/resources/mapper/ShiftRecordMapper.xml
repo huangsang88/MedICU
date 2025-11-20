@@ -2,20 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="icu.one.mapper.ShiftRecordMapper">
 
-    <resultMap id="ShiftRecordResultMap" type="icu.one.entity.ShiftRecord">
-        <id column="shift_id" property="shiftId"/>
-        <result column="patient_id" property="patientId"/>
-        <result column="shift_time" property="shiftTime"/>
-        <result column="shift_type" property="shiftType"/>
-        <result column="handover_nurse" property="handoverNurse"/>
-        <result column="takeover_nurse" property="takeoverNurse"/>
-        <result column="patient_status" property="patientStatus"/>
-        <result column="special_notes" property="specialNotes"/>
-        <result column="created_time" property="createdTime"/>
-    </resultMap>
-
     <!-- 查询患者交班记录 -->
-    <select id="getShiftRecordsByPatientId" resultMap="ShiftRecordResultMap">
+    <select id="getShiftRecordsByPatientId">
         SELECT * FROM shift_records 
         WHERE patient_id = #{patientId} 
         ORDER BY shift_time DESC
@@ -43,7 +31,7 @@
     </insert>
     
     <!-- 查询最近交班记录 -->
-    <select id="getLatestShiftRecord" resultMap="ShiftRecordsResultMap">
+    <select id="getLatestShiftRecord">
         SELECT * FROM shift_records 
         WHERE patient_id = #{patientId}
         ORDER BY shift_time DESC 

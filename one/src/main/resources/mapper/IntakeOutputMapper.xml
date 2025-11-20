@@ -2,21 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="icu.one.mapper.IntakeOutputMapper">
 
-    <resultMap id="IntakeOutputResultMap" type="icu.one.entity.IntakeOutput">
-        <id column="record_id" property="recordId"/>
-        <result column="patient_id" property="patientId"/>
-        <result column="record_time" property="recordTime"/>
-        <result column="type" property="type"/>
-        <result column="category" property="category"/>
-        <result column="volume_ml" property="volumeMl"/>
-        <result column="description" property="description"/>
-        <result column="shift_type" property="shiftType"/>
-        <result column="nurse_id" property="nurseId"/>
-        <result column="created_time" property="createdTime"/>
-    </resultMap>
-
     <!-- 查询24小时出入量平衡 -->
-    <select id="get24HourBalance" resultType="map">
+    <select id="get24HourBalance">
         SELECT 
             SUM(CASE WHEN type = '摄入' THEN volume_ml ELSE 0 END) as total_intake,
             SUM(CASE WHEN type = '排出' THEN volume_ml ELSE 0 END) as total_output,
@@ -28,7 +15,7 @@
     </select>
 
     <!-- 查询24小时出入量分类总结 -->
-    <select id="get24HourSummary" resultType="map">
+    <select id="get24HourSummary" >
         SELECT 
             type,
             category,
@@ -41,7 +28,7 @@
     </select>
 
     <!-- 查询班次内出入量 -->
-    <select id="getShiftBalance" resultType="map">
+    <select id="getShiftBalance" >
         SELECT 
             SUM(CASE WHEN type = '摄入' THEN volume_ml ELSE 0 END) as total_intake,
             SUM(CASE WHEN type = '排出' THEN volume_ml ELSE 0 END) as total_output,
@@ -54,7 +41,7 @@
     </select>
 
     <!-- 查询出入量趋势 -->
-    <select id="getIntakeOutputTrend" resultMap="IntakeOutputResultMap">
+    <select id="getIntakeOutputTrend" >
         SELECT * FROM intake_output 
         WHERE patient_id = #{patientId} 
         AND record_time BETWEEN #{startTime} AND #{endTime}

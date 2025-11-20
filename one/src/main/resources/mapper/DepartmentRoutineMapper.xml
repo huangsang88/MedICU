@@ -2,32 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="icu.one.mapper.DepartmentRoutineMapper">
 
-    <resultMap id="DepartmentRoutineResultMap" type="icu.one.entity.DepartmentRoutine">
-        <id column="routine_id" property="routineId"/>
-        <result column="department" property="department"/>
-        <result column="routine_name" property="routineName"/>
-        <result column="description" property="description"/>
-        <result column="trigger_event" property="triggerEvent"/>
-        <result column="trigger_time" property="triggerTime"/>
-        <result column="delay_minutes" property="delayMinutes"/>
-        <result column="template_id" property="templateId"/>
-        <result column="is_active" property="isActive"/>
-        <result column="created_by" property="createdBy"/>
-        <result column="created_time" property="createdTime"/>
-    </resultMap>
-
-    <resultMap id="DepartmentRoutineWithTemplateResultMap" type="icu.one.entity.DepartmentRoutine" extends="DepartmentRoutineResultMap">
-        <association property="taskTemplate" javaType="icu.one.entity.TaskTemplate">
-            <id column="template_id" property="templateId"/>
-            <result column="task_name" property="taskName"/>
-            <result column="task_type" property="taskType"/>
-            <result column="frequency" property="frequency"/>
-            <result column="default_assignee_role" property="defaultAssigneeRole"/>
-        </association>
-    </resultMap>
-
     <!-- 查询所有科室常规配置 -->
-    <select id="selectAllRoutines" resultMap="DepartmentRoutineWithTemplateResultMap">
+    <select id="selectAllRoutines">
         SELECT 
             dr.*,
             tt.task_name,
@@ -41,7 +17,7 @@
     </select>
 
     <!-- 根据ID查询科室常规配置 -->
-    <select id="getRoutineById" resultMap="DepartmentRoutineWithTemplateResultMap">
+    <select id="getRoutineById">
         SELECT 
             dr.*,
             tt.task_name,
@@ -54,7 +30,7 @@
     </select>
 
     <!-- 根据科室查询常规配置 -->
-    <select id="getRoutinesByDepartment" resultMap="DepartmentRoutineWithTemplateResultMap">
+    <select id="getRoutinesByDepartment">
         SELECT 
             dr.*,
             tt.task_name,
@@ -68,7 +44,7 @@
     </select>
 
     <!-- 根据触发事件查询配置 -->
-    <select id="getRoutinesByTriggerEvent" resultMap="DepartmentRoutineWithTemplateResultMap">
+    <select id="getRoutinesByTriggerEvent" >
         SELECT 
             dr.*,
             tt.task_name,
@@ -120,7 +96,7 @@
     </delete>
 
     <!-- 根据患者入院事件生成任务 -->
-    <select id="getRoutinesForPatientAdmission" resultMap="DepartmentRoutineWithTemplateResultMap">
+    <select id="getRoutinesForPatientAdmission" >
         SELECT 
             dr.*,
             tt.task_name,
@@ -137,7 +113,7 @@
     </select>
 
     <!-- 统计各科室常规配置数量 -->
-    <select id="getRoutineStatistics" resultType="map">
+    <select id="getRoutineStatistics" >
         SELECT 
             department,
             trigger_event,

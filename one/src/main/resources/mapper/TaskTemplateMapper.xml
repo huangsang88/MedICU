@@ -2,48 +2,32 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="icu.one.mapper.TaskTemplateMapper">
 
-    <resultMap id="TaskTemplateResultMap" type="icu.one.entity.TaskTemplate">
-        <id column="template_id" property="templateId"/>
-        <result column="task_name" property="taskName"/>
-        <result column="description" property="description"/>
-        <result column="task_type" property="taskType"/>
-        <result column="frequency" property="frequency"/>
-        <result column="department" property="department"/>
-        <result column="trigger_condition" property="triggerCondition"/>
-        <result column="default_assignee_role" property="defaultAssigneeRole"/>
-        <result column="estimated_duration" property="estimatedDuration"/>
-        <result column="is_active" property="isActive"/>
-        <result column="created_by" property="createdBy"/>
-        <result column="created_time" property="createdTime"/>
-        <result column="updated_time" property="updatedTime"/>
-    </resultMap>
-
     <!-- 查询所有任务模板 -->
-    <select id="selectAllTemplates" resultMap="TaskTemplateResultMap">
+    <select id="selectAllTemplates">
         SELECT * FROM task_templates WHERE is_active = TRUE ORDER BY created_time DESC
     </select>
 
     <!-- 根据ID查询任务模板 -->
-    <select id="getTemplateById" resultMap="TaskTemplateResultMap">
+    <select id="getTemplateById">
         SELECT * FROM task_templates WHERE template_id = #{templateId}
     </select>
 
     <!-- 根据科室查询任务模板 -->
-    <select id="getTemplatesByDepartment" resultMap="TaskTemplateResultMap">
+    <select id="getTemplatesByDepartment">
         SELECT * FROM task_templates 
         WHERE department = #{department} AND is_active = TRUE 
         ORDER BY task_type, task_name
     </select>
 
     <!-- 根据任务类型查询模板 -->
-    <select id="getTemplatesByType" resultMap="TaskTemplateResultMap">
+    <select id="getTemplatesByType">
         SELECT * FROM task_templates 
         WHERE task_type = #{taskType} AND is_active = TRUE 
         ORDER BY task_name
     </select>
 
     <!-- 根据频率查询模板 -->
-    <select id="getTemplatesByFrequency" resultMap="TaskTemplateResultMap">
+    <select id="getTemplatesByFrequency">
         SELECT * FROM task_templates 
         WHERE frequency = #{frequency} AND is_active = TRUE 
         ORDER BY task_name
@@ -92,7 +76,7 @@
     </delete>
 
     <!-- 统计各类型任务模板数量 -->
-    <select id="getTemplateStatistics" resultType="map">
+    <select id="getTemplateStatistics">
         SELECT 
             task_type,
             COUNT(*) as count,

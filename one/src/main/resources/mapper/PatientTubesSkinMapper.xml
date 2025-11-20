@@ -2,20 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="icu.one.mapper.PatientTubesSkinMapper">
 
-    <resultMap id="PatientTubesSkinResultMap" type="icu.one.entity.PatientTubesSkin">
-        <id column="record_id" property="recordId"/>
-        <result column="patient_id" property="patientId"/>
-        <result column="record_time" property="recordTime"/>
-        <result column="type" property="type"/>
-        <result column="anatomical_location" property="anatomicalLocation"/>
-        <result column="description" property="description"/>
-        <result column="status" property="status"/>
-        <result column="image_or_model_ref" property="imageOrModelRef"/>
-        <result column="created_time" property="createdTime"/>
-    </resultMap>
-
     <!-- 查询患者管路信息 -->
-    <select id="getPatientTubes" resultMap="PatientTubesSkinResultMap">
+    <select id="getPatientTubes">
         SELECT * FROM patient_tubes_skin 
         WHERE patient_id = #{patientId} 
         AND type = '管路'
@@ -23,7 +11,7 @@
     </select>
 
     <!-- 查询患者皮肤信息 -->
-    <select id="getPatientSkin" resultMap="PatientTubesSkinResultMap">
+    <select id="getPatientSkin">
         SELECT * FROM patient_tubes_skin 
         WHERE patient_id = #{patientId} 
         AND type = '皮肤'
@@ -31,7 +19,7 @@
     </select>
 
     <!-- 查询3D模型所需的管路皮肤信息 -->
-    <select id="get3DModelData" resultMap="PatientTubesSkinResultMap">
+    <select id="get3DModelData">
         SELECT * FROM patient_tubes_skin 
         WHERE patient_id = #{patientId} 
         AND status IN ('异常', '风险')

@@ -3,14 +3,14 @@
 <mapper namespace="icu.one.mapper.MedicalOrderMapper">
 
     <!-- 查询患者检验检查医嘱 -->
-    <select id="getOrdersByPatientId" resultMap="MedicalOrderResultMap">
+    <select id="getOrdersByPatientId" >
         SELECT * FROM medical_orders 
         WHERE patient_id = #{patientId} 
         ORDER BY order_time DESC
     </select>
 
     <!-- 查询检验检查项目（根据内容关键词） -->
-    <select id="getLabAndExamOrders" resultMap="MedicalOrderResultMap">
+    <select id="getLabAndExamOrders" >
         SELECT * FROM medical_orders 
         WHERE order_content LIKE CONCAT('%', #{keyword}, '%')
         AND patient_id = #{patientId}
@@ -47,7 +47,7 @@
     </update>
 
     <!-- 查询待执行检验检查 -->
-    <select id="getPendingOrders" resultMap="MedicalOrderResultMap">
+    <select id="getPendingOrders" >
         SELECT * FROM medical_orders 
         WHERE status = '新开' 
         AND order_content LIKE '%检验%' OR order_content LIKE '%检查%'
@@ -55,7 +55,7 @@
     </select>
     
     <!-- 查询新开医嘱（用于提醒） -->
-    <select id="getNewOrders" resultMap="MedicalOrdersResultMap">
+    <select id="getNewOrders">
         SELECT * FROM medical_orders 
         WHERE status = '新开' 
         AND order_time >= #{startTime}

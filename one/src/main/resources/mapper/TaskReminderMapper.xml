@@ -2,34 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="icu.one.mapper.TaskReminderMapper">
 
-    <resultMap id="TaskReminderResultMap" type="icu.one.entity.TaskReminder">
-        <id column="reminder_id" property="reminderId"/>
-        <result column="task_id" property="taskId"/>
-        <result column="user_id" property="userId"/>
-        <result column="reminder_time" property="reminderTime"/>
-        <result column="message" property="message"/>
-        <result column="reminder_type" property="reminderType"/>
-        <result column="status" property="status"/>
-        <result column="sent_time" property="sentTime"/>
-        <result column="created_time" property="createdTime"/>
-    </resultMap>
-
-    <resultMap id="TaskReminderWithDetailsResultMap" type="icu.one.entity.TaskReminder" extends="TaskReminderResultMap">
-        <association property="task" javaType="icu.one.entity.Task">
-            <id column="task_id" property="taskId"/>
-            <result column="task_name" property="taskName"/>
-            <result column="scheduled_time" property="scheduledTime"/>
-            <result column="priority" property="priority"/>
-        </association>
-        <association property="user" javaType="icu.one.entity.User">
-            <id column="user_id" property="userId"/>
-            <result column="real_name" property="realName"/>
-            <result column="username" property="username"/>
-        </association>
-    </resultMap>
-
     <!-- 查询所有提醒 -->
-    <select id="selectAllReminders" resultMap="TaskReminderWithDetailsResultMap">
+    <select id="selectAllReminders">
         SELECT 
             tr.*,
             t.task_name,
@@ -44,7 +18,7 @@
     </select>
 
     <!-- 根据ID查询提醒 -->
-    <select id="getReminderById" resultMap="TaskReminderWithDetailsResultMap">
+    <select id="getReminderById">
         SELECT 
             tr.*,
             t.task_name,
@@ -59,7 +33,7 @@
     </select>
 
     <!-- 根据任务ID查询提醒 -->
-    <select id="getRemindersByTaskId" resultMap="TaskReminderWithDetailsResultMap">
+    <select id="getRemindersByTaskId">
         SELECT 
             tr.*,
             t.task_name,
@@ -75,7 +49,7 @@
     </select>
 
     <!-- 根据用户ID查询提醒 -->
-    <select id="getRemindersByUserId" resultMap="TaskReminderWithDetailsResultMap">
+    <select id="getRemindersByUserId">
         SELECT 
             tr.*,
             t.task_name,
@@ -91,7 +65,7 @@
     </select>
 
     <!-- 查询待发送的提醒 -->
-    <select id="getPendingReminders" resultMap="TaskReminderWithDetailsResultMap">
+    <select id="getPendingReminders">
         SELECT 
             tr.*,
             t.task_name,
@@ -107,7 +81,7 @@
     </select>
 
     <!-- 查询今日提醒 -->
-    <select id="getTodayReminders" resultMap="TaskReminderWithDetailsResultMap">
+    <select id="getTodayReminders">
         SELECT 
             tr.*,
             t.task_name,
@@ -123,7 +97,7 @@
     </select>
 
     <!-- 根据状态查询提醒 -->
-    <select id="getRemindersByStatus" resultMap="TaskReminderWithDetailsResultMap">
+    <select id="getRemindersByStatus">
         SELECT 
             tr.*,
             t.task_name,
@@ -200,7 +174,7 @@
     </delete>
 
     <!-- 统计提醒发送情况 -->
-    <select id="getReminderStatistics" resultType="map">
+    <select id="getReminderStatistics">
         SELECT 
             status,
             reminder_type,
@@ -212,7 +186,7 @@
     </select>
 
     <!-- 获取用户未读提醒数量 -->
-    <select id="getUnreadReminderCount" resultType="int">
+    <select id="getUnreadReminderCount">
         SELECT COUNT(*) 
         FROM task_reminders 
         WHERE user_id = #{userId} AND status = '已发送'
